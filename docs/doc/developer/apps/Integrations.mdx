@@ -70,6 +70,75 @@ Notes and recommendations:
 - Extract audio features (spectrograms, embeddings) in real-time
 - Store raw audio chunks to cloud storage for later processing
 
+### 4. 🔔 Proactive Notifications
+
+Proactive notifications allow your app to send **context-aware, AI-generated notifications** to users based on their real-time conversations. Unlike direct notifications where you send exact text, proactive notifications let you provide a prompt template, and Omi generates personalized messages using user context.
+
+#### How It Works:
+
+1. Your app receives real-time transcript data (requires `transcript_processed` trigger)
+2. When relevant triggers are detected, your webhook returns a notification prompt with template variables
+3. Omi replaces template variables (e.g., `{{user_name}}`, `{{user_facts}}`) with actual user data
+4. Omi generates the final notification message using AI
+5. The notification is delivered to the user
+
+#### Configuration Requirements:
+
+Your app needs both capabilities:
+- `external_integration` with `transcript_processed` trigger
+- `proactive_notification` with defined scopes
+
+```json
+{
+  "capabilities": ["external_integration", "proactive_notification"],
+  "external_integration": {
+    "triggers_on": "transcript_processed",
+    "webhook_url": "https://yourapp.com/webhook"
+  },
+  "proactive_notification": {
+    "scopes": ["user_name", "user_facts", "user_context", "user_chat"]
+  }
+}
+```
+
+#### Available Scopes:
+
+| Scope | Description | Template Variable |
+|-------|-------------|-------------------|
+| `user_name` | User's display name | `{{user_name}}` |
+| `user_facts` | User's stored memories | `{{user_facts}}` |
+| `user_context` | Recent conversation context | `{{user_context}}` |
+| `user_chat` | App chat history | `{{user_chat}}` |
+
+#### Response Format:
+
+When your webhook wants to trigger a proactive notification:
+
+```json
+{
+  "session_id": "abc123",
+  "notification": {
+    "prompt": "You are helping {{user_name}}. Based on their goals: {{user_facts}}\n\nCurrent discussion: {{user_context}}\n\nProvide advice in 50 words.",
+    "params": ["user_name", "user_facts", "user_context"]
+  }
+}
+```
+
+#### Example Use Cases
+
+- Real-time mentoring during meetings
+- Context-aware task suggestions
+- Personalized insights based on conversation topics
+- Intelligent reminders triggered by specific discussions
+
+#### Rate Limiting
+
+- 1 notification per user per app every 30 seconds
+- Enforced automatically by the backend
+- Design your triggers carefully to respect user attention
+
+For detailed implementation guide, see the [Notifications documentation](https://docs.omi.me/doc/developer/apps/Notifications).
+
 ## Creating an Integration App
 
 ### Step 1: Define Your App 🎯
